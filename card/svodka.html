@@ -114,113 +114,127 @@
   let labels = { trash: null, done: null };
   let dry = false;
 
+  // Built-in interface texts for English and Russian, generated from ui/en.json.
+  // Any other language arrives with the summary as data.ui — translated once by /setup.
+  // Missing keys fall back to English.
   const I18N = {
-    ru: {
-      lang: "ru",
-      locale: "ru-RU",
-      title: "Сводка почты",
-      loading: "загружаю…",
-      reading: "Читаю свежую сводку из почты…",
-      tiles: { marked: "помечено", act: "требует действия", unread: "непрочитанных" },
-      note: "Отмечай решения — ничего не происходит, пока не нажмёшь кнопку внизу. Всё обратимо: корзина хранит письма 30 дней, ярлык снимается.",
-      dryNote: "Пробный режим: разбор настоящий, но ярлыки в почте не ставились.",
-      noDoneLabel: "Кнопка «Оставить» появится после следующего прогона.",
-      nothing: "Ничего не выбрано",
-      apply: (n) => "Выполнить: " + n,
-      applying: (i, n) => "Выполняю " + i + " из " + n,
-      done: (ok, failed) => (failed ? "Готово: " + ok + ", с ошибкой: " + failed : "Готово: " + ok),
-      reset: "Сбросить",
-      later: (n) => "Напомнить позже: " + n + " — придут в следующей сводке",
-      undoHint: "Передумаешь — жми «Вернуть» у нужного письма.",
-      options: { read: "Оставить · больше не показывать", explain: "Напомнить позже", trash: "В корзину" },
-      reply: "Ответить",
-      noSubject: "(без темы)",
-      why: "Почему сюда: ",
-      sections: {
-        act: ["🔴 Требует действия", "Ждут ответа, оплаты или есть дедлайн."],
-        unread: ["📥 Непрочитанное — важное сверху", ""],
-        check: ["❓ Проверить", "Тут разбор не рискнул решать сам."],
-        marked: "🗑 Помечено",
-      },
-      defaultTrash: "🗑 На удаление",
-      markedHint: (name) => "Ярлык «" + name + "» уже стоит. Из почты ничего не удалено — почистить можно в Gmail. ",
-      markedHintDry: (name) => "Пробный режим: ярлык «" + name + "» не ставился, это только предложение. ",
-      openLabel: "Открыть ярлык в Gmail",
-      kept: "оставлено · в сводке больше не покажу",
-      trashed: "в корзине",
-      undo: "Вернуть",
-      restored: "возвращено",
-      dateLine: (date, made) => "за " + date + (made ? " · собрана " + made : ""),
-      noDrafts: "Свежей сводки нет. Она собирается каждое утро — либо прогон ещё не проходил, либо упал.",
-      broken: "Сводка в почте есть, но она испорчена — прогон записал не то. Нужен повторный прогон.",
-      foot: "Собрано перебором переписок, без поиска по словам. Ссылки из писем не открывались, вложения не читались. Сводка обновляется сама каждое утро.",
-      errors: {
-        needs_reauth: "Доступ к Gmail истёк — переподключи коннектор в настройках claude.ai.",
-        server_not_connected: "Коннектор Gmail не подключён — включи его в настройках claude.ai.",
-        selection_required: "Подключено несколько Gmail — надо выбрать один.",
-        not_in_manifest: "Странице не выдали доступ к этому действию.",
-        blocked: "Заблокировано политикой доступа.",
-        no_access: "Здесь страница не может обращаться к почте. Открой её на claude.ai под своим аккаунтом.",
-        server_unavailable: "Gmail не ответил, попробуй ещё раз.",
-        tool_error: (m) => "Gmail вернул ошибку: " + (m || "без пояснения"),
-        other: (c, m) => "Не вышло: " + c + (m ? " — " + m : ""),
-      },
+    "en": {
+      "title": "Email summary",
+      "loading": "loading…",
+      "reading": "Reading the latest summary from your mail…",
+      "tileMarked": "marked",
+      "tileAct": "need action",
+      "tileUnread": "unread",
+      "note": "Pick your decisions — nothing happens until you press the button below. Everything is reversible: Trash keeps mail for 30 days, labels can be removed.",
+      "dryNote": "Dry run: the triage is real, but no labels were applied.",
+      "noDoneLabel": "The “Keep” button appears after the next run.",
+      "nothing": "Nothing selected",
+      "apply": "Apply: {n}",
+      "applying": "Applying {i} of {n}",
+      "done": "Done: {ok}",
+      "doneFailed": "Done: {ok}, failed: {failed}",
+      "reset": "Reset",
+      "later": "Remind me later: {n} — they come back in the next summary",
+      "undoHint": "Changed your mind? Press “Undo” on the message.",
+      "optRead": "Keep · don't show again",
+      "optLater": "Remind me later",
+      "optTrash": "Move to Trash",
+      "reply": "Reply",
+      "noSubject": "(no subject)",
+      "why": "Why here: ",
+      "actTitle": "🔴 Needs action",
+      "actHint": "Awaiting a reply or a payment, or has a deadline.",
+      "unreadTitle": "📥 Unread — most important first",
+      "unreadHint": "",
+      "checkTitle": "❓ To check",
+      "checkHint": "The triage did not dare to decide these on its own.",
+      "markedTitle": "🗑 Marked",
+      "defaultTrash": "🗑 To delete",
+      "markedHint": "The “{name}” label is already applied. Nothing was deleted — clean up in Gmail whenever you like. ",
+      "markedHintDry": "Dry run: the “{name}” label was not applied, this is only a suggestion. ",
+      "openLabel": "Open the label in Gmail",
+      "kept": "kept · won't show again",
+      "trashed": "in Trash",
+      "undo": "Undo",
+      "restored": "restored",
+      "dateLine": "for {date}",
+      "builtAt": " · built {time}",
+      "noDrafts": "No summary yet. It is built every morning — either the run has not happened yet, or it failed.",
+      "broken": "The summary in your mail is damaged — the run wrote something wrong. Run it again.",
+      "foot": "Built by going through conversations one by one, not by keyword search. No links were opened and no attachments were read. The summary refreshes itself every morning.",
+      "errReauth": "Gmail access has expired — reconnect the connector in claude.ai settings.",
+      "errNotConnected": "The Gmail connector is not connected — turn it on in claude.ai settings.",
+      "errSelection": "Several Gmail connectors are connected — choose one.",
+      "errNotInManifest": "This page was not given access to that action.",
+      "errBlocked": "Blocked by an access policy.",
+      "errNoAccess": "This page cannot reach your mail here. Open it on claude.ai with your account.",
+      "errUnavailable": "Gmail did not respond, try again.",
+      "errTool": "Gmail returned an error: {message}",
+      "errOther": "Something went wrong: {code} {message}"
     },
-    en: {
-      lang: "en",
-      locale: "en-GB",
-      title: "Email summary",
-      loading: "loading…",
-      reading: "Reading the latest summary from your mail…",
-      tiles: { marked: "marked", act: "need action", unread: "unread" },
-      note: "Pick your decisions — nothing happens until you press the button below. Everything is reversible: Trash keeps mail for 30 days, labels can be removed.",
-      dryNote: "Dry run: the triage is real, but no labels were applied.",
-      noDoneLabel: "The “Keep” button appears after the next run.",
-      nothing: "Nothing selected",
-      apply: (n) => "Apply: " + n,
-      applying: (i, n) => "Applying " + i + " of " + n,
-      done: (ok, failed) => (failed ? "Done: " + ok + ", failed: " + failed : "Done: " + ok),
-      reset: "Reset",
-      later: (n) => "Remind me later: " + n + " — they come back in the next summary",
-      undoHint: "Changed your mind? Press “Undo” on the message.",
-      options: { read: "Keep · don't show again", explain: "Remind me later", trash: "Move to Trash" },
-      reply: "Reply",
-      noSubject: "(no subject)",
-      why: "Why here: ",
-      sections: {
-        act: ["🔴 Needs action", "Awaiting a reply or a payment, or has a deadline."],
-        unread: ["📥 Unread — most important first", ""],
-        check: ["❓ To check", "The triage did not dare to decide these on its own."],
-        marked: "🗑 Marked",
-      },
-      defaultTrash: "🗑 To delete",
-      markedHint: (name) => "The “" + name + "” label is already applied. Nothing was deleted — clean up in Gmail whenever you like. ",
-      markedHintDry: (name) => "Dry run: the “" + name + "” label was not applied, this is only a suggestion. ",
-      openLabel: "Open the label in Gmail",
-      kept: "kept · won't show again",
-      trashed: "in Trash",
-      undo: "Undo",
-      restored: "restored",
-      dateLine: (date, made) => "for " + date + (made ? " · built " + made : ""),
-      noDrafts: "No summary yet. It is built every morning — either the run has not happened yet, or it failed.",
-      broken: "The summary in your mail is damaged — the run wrote something wrong. Run it again.",
-      foot: "Built by going through conversations one by one, not by keyword search. No links were opened and no attachments were read. The summary refreshes itself every morning.",
-      errors: {
-        needs_reauth: "Gmail access has expired — reconnect the connector in claude.ai settings.",
-        server_not_connected: "The Gmail connector is not connected — turn it on in claude.ai settings.",
-        selection_required: "Several Gmail connectors are connected — choose one.",
-        not_in_manifest: "This page was not given access to that action.",
-        blocked: "Blocked by an access policy.",
-        no_access: "This page cannot reach your mail here. Open it on claude.ai with your account.",
-        server_unavailable: "Gmail did not respond, try again.",
-        tool_error: (m) => "Gmail returned an error: " + (m || "no details"),
-        other: (c, m) => "Something went wrong: " + c + (m ? " — " + m : ""),
-      },
-    },
+    "ru": {
+      "title": "Сводка почты",
+      "loading": "загружаю…",
+      "reading": "Читаю свежую сводку из почты…",
+      "tileMarked": "помечено",
+      "tileAct": "требует действия",
+      "tileUnread": "непрочитанных",
+      "note": "Отмечай решения — ничего не происходит, пока не нажмёшь кнопку внизу. Всё обратимо: корзина хранит письма 30 дней, ярлык снимается.",
+      "dryNote": "Пробный режим: разбор настоящий, но ярлыки в почте не ставились.",
+      "noDoneLabel": "Кнопка «Оставить» появится после следующего прогона.",
+      "nothing": "Ничего не выбрано",
+      "apply": "Выполнить: {n}",
+      "applying": "Выполняю {i} из {n}",
+      "done": "Готово: {ok}",
+      "doneFailed": "Готово: {ok}, с ошибкой: {failed}",
+      "reset": "Сбросить",
+      "later": "Напомнить позже: {n} — придут в следующей сводке",
+      "undoHint": "Передумаешь — жми «Вернуть» у нужного письма.",
+      "optRead": "Оставить · больше не показывать",
+      "optLater": "Напомнить позже",
+      "optTrash": "В корзину",
+      "reply": "Ответить",
+      "noSubject": "(без темы)",
+      "why": "Почему сюда: ",
+      "actTitle": "🔴 Требует действия",
+      "actHint": "Ждут ответа, оплаты или есть дедлайн.",
+      "unreadTitle": "📥 Непрочитанное — важное сверху",
+      "unreadHint": "",
+      "checkTitle": "❓ Проверить",
+      "checkHint": "Тут разбор не рискнул решать сам.",
+      "markedTitle": "🗑 Помечено",
+      "defaultTrash": "🗑 На удаление",
+      "markedHint": "Ярлык «{name}» уже стоит. Из почты ничего не удалено — почистить можно в Gmail. ",
+      "markedHintDry": "Пробный режим: ярлык «{name}» не ставился, это только предложение. ",
+      "openLabel": "Открыть ярлык в Gmail",
+      "kept": "оставлено · в сводке больше не покажу",
+      "trashed": "в корзине",
+      "undo": "Вернуть",
+      "restored": "возвращено",
+      "dateLine": "за {date}",
+      "builtAt": " · собрана {time}",
+      "noDrafts": "Свежей сводки нет. Она собирается каждое утро — либо прогон ещё не проходил, либо упал.",
+      "broken": "Сводка в почте есть, но она испорчена — прогон записал не то. Нужен повторный прогон.",
+      "foot": "Собрано перебором переписок, без поиска по словам. Ссылки из писем не открывались, вложения не читались. Сводка обновляется сама каждое утро.",
+      "errReauth": "Доступ к Gmail истёк — переподключи коннектор в настройках claude.ai.",
+      "errNotConnected": "Коннектор Gmail не подключён — включи его в настройках claude.ai.",
+      "errSelection": "Подключено несколько Gmail — надо выбрать один.",
+      "errNotInManifest": "Странице не выдали доступ к этому действию.",
+      "errBlocked": "Заблокировано политикой доступа.",
+      "errNoAccess": "Здесь страница не может обращаться к почте. Открой её на claude.ai под своим аккаунтом.",
+      "errUnavailable": "Gmail не ответил, попробуй ещё раз.",
+      "errTool": "Gmail вернул ошибку: {message}",
+      "errOther": "Не вышло: {code} {message}"
+    }
   };
 
+  const fmt = (s, vars = {}) => String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
+  const localeFor = (code) => ({ ru: "ru-RU", en: "en-GB" })[code] || code || "en-GB";
+  const pick = (code, extra) => ({ ...I18N.en, ...(I18N[code] || {}), ...(extra || {}) });
+
   // Until the summary says which language it is in, follow the browser.
-  let T = I18N[(navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en"];
+  let lang = (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
+  let T = pick(lang);
 
   const mcp = () => (window.claude && window.claude.mcp) ? window.claude.mcp : null;
   const picks = new Map();
@@ -234,13 +248,13 @@
   };
 
   function applyStatic() {
-    document.documentElement.lang = T.lang;
+    document.documentElement.lang = lang;
     $("title").textContent = T.title;
     $("date").textContent = T.loading;
     $("status").textContent = T.reading;
-    $("l-marked").textContent = T.tiles.marked;
-    $("l-act").textContent = T.tiles.act;
-    $("l-unread").textContent = T.tiles.unread;
+    $("l-marked").textContent = T.tileMarked;
+    $("l-act").textContent = T.tileAct;
+    $("l-unread").textContent = T.tileUnread;
     $("note").textContent = T.note;
     $("apply").textContent = T.nothing;
     $("reset").textContent = T.reset;
@@ -248,22 +262,21 @@
 
   function explain(err) {
     const c = err && err.code;
-    const E = T.errors;
-    if (c === "needs_reauth") return E.needs_reauth;
-    if (c === "server_not_connected") return E.server_not_connected;
-    if (c === "selection_required") return E.selection_required;
-    if (c === "not_in_manifest") return E.not_in_manifest;
-    if (c === "blocked_by_policy" || c === "approval_required") return E.blocked;
-    if (c === "not_granted" || c === "capability_disabled" || c === "capability_removed") return E.no_access;
-    if (c === "server_unavailable") return E.server_unavailable;
-    if (c === "tool_error") return E.tool_error(err.message);
-    return E.other(c, err && err.message);
+    if (c === "needs_reauth") return T.errReauth;
+    if (c === "server_not_connected") return T.errNotConnected;
+    if (c === "selection_required") return T.errSelection;
+    if (c === "not_in_manifest") return T.errNotInManifest;
+    if (c === "blocked_by_policy" || c === "approval_required") return T.errBlocked;
+    if (c === "not_granted" || c === "capability_disabled" || c === "capability_removed") return T.errNoAccess;
+    if (c === "server_unavailable") return T.errUnavailable;
+    if (c === "tool_error") return fmt(T.errTool, { message: err.message || "" });
+    return fmt(T.errOther, { code: c || "", message: (err && err.message) || "" });
   }
 
   const OPTIONS = [
-    { key: "read", tone: "t-keep" },
-    { key: "explain", tone: "t-later" },
-    { key: "trash", tone: "t-trash" },
+    { key: "read", text: "optRead", tone: "t-keep" },
+    { key: "explain", text: "optLater", tone: "t-later" },
+    { key: "trash", text: "optTrash", tone: "t-trash" },
   ];
 
   function row(m, kind) {
@@ -284,7 +297,7 @@
 
     // Without the id of the "done" label the Keep button cannot work — do not show it.
     OPTIONS.filter((o) => o.key !== "read" || (labels.done && labels.done.id)).forEach((opt) => {
-      const b = el("button", "chip tone " + opt.tone, T.options[opt.key]);
+      const b = el("button", "chip tone " + opt.tone, T[opt.text]);
       b.type = "button";
       b.setAttribute("aria-pressed", "false");
       b.addEventListener("click", () => {
@@ -304,11 +317,11 @@
 
   function section(kind, items) {
     if (!items || !items.length) return;
-    const [title, hint] = T.sections[kind];
     const host = $("sections");
-    const h = el("h2", null, title);
+    const h = el("h2", null, T[kind + "Title"]);
     h.append(el("span", "n", String(items.length)));
     host.append(h);
+    const hint = T[kind + "Hint"];
     if (hint) host.append(el("div", "hint", hint));
     items.forEach((m) => host.append(row(m, kind)));
   }
@@ -316,11 +329,11 @@
   function markedSection(items) {
     if (!items || !items.length) return;
     const host = $("sections");
-    const h = el("h2", null, T.sections.marked);
+    const h = el("h2", null, T.markedTitle);
     h.append(el("span", "n", String(items.length)));
     host.append(h);
     const trashName = (labels.trash && labels.trash.name) || T.defaultTrash;
-    const hint = el("div", "hint", dry ? T.markedHintDry(trashName) : T.markedHint(trashName));
+    const hint = el("div", "hint", fmt(dry ? T.markedHintDry : T.markedHint, { name: trashName }));
     const link = el("a", null, T.openLabel);
     link.href = "https://mail.google.com/mail/u/0/#search/" + encodeURIComponent('label:"' + trashName + '"');
     link.target = "_blank"; link.rel = "noopener";
@@ -344,8 +357,8 @@
     const n = pending().length;
     const later = [...picks.values()].filter((r) => r.choice === "explain").length;
     $("apply").disabled = n === 0;
-    $("apply").textContent = n === 0 ? T.nothing : T.apply(n);
-    $("barnote").textContent = later ? T.later(later) : "";
+    $("apply").textContent = n === 0 ? T.nothing : fmt(T.apply, { n });
+    $("barnote").textContent = later ? fmt(T.later, { n: later }) : "";
   }
 
   async function run(rec) {
@@ -403,7 +416,7 @@
     let ok = 0, failed = 0;
     for (const rec of todo) {
       rec.state.className = "state"; rec.state.textContent = "…";
-      $("apply").textContent = T.applying(ok + failed + 1, todo.length);
+      $("apply").textContent = fmt(T.applying, { i: ok + failed + 1, n: todo.length });
       try {
         rec.state.className = "state ok";
         rec.state.textContent = await run(rec);
@@ -416,7 +429,7 @@
         failed++;
       }
     }
-    $("apply").textContent = T.done(ok, failed);
+    $("apply").textContent = failed ? fmt(T.doneFailed, { ok, failed }) : fmt(T.done, { ok });
     $("barnote").textContent = T.undoHint;
     $("reset").disabled = false;
   });
@@ -432,7 +445,7 @@
     applyStatic();
 
     if (!mcp()) {
-      fail(T.errors.no_access);
+      fail(T.errNoAccess);
       return;
     }
 
@@ -466,17 +479,21 @@
       return;
     }
 
-    if (I18N[data.language]) {
-      T = I18N[data.language];
+    if (data.language) {
+      lang = data.language;
+      T = pick(lang, data.ui);
       applyStatic();
     }
     labels = data.labels || { trash: null, done: null };
     dry = !!data.dryRun;
 
-    const made = d.date
-      ? new Date(d.date).toLocaleString(T.locale, { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "long" })
-      : null;
-    $("date").textContent = T.dateLine(data.date || "—", made);
+    let made = null;
+    if (d.date) {
+      const opts = { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "long" };
+      try { made = new Date(d.date).toLocaleString(localeFor(lang), opts); }
+      catch (e) { made = new Date(d.date).toLocaleString("en-GB", opts); }
+    }
+    $("date").textContent = fmt(T.dateLine, { date: data.date || "—" }) + (made ? fmt(T.builtAt, { time: made }) : "");
     $("status").hidden = true;
     $("tiles").hidden = false;
     $("note").hidden = false;

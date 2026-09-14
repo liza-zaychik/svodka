@@ -12,6 +12,7 @@
     "done": "✅ Done",
     "notify": "📬 Svodka"
   },
+  "fullTextForAction": true,
   "notify": {
     "ready": true,
     "failed": true,

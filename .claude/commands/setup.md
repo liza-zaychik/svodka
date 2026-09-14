@@ -38,7 +38,8 @@ Main questions:
 Offer "more details" for: past trips (6 months), appointment confirmations (right
 after the event), stale confirmations (2 weeks), things that are junk immediately
 (one-time codes, digests, review requests), the never-touch list, and the priority
-order of the Unread section.
+order of the Unread section, and whether to read the full text of emails that need
+action for more precise gists (`fullTextForAction`, default yes).
 
 Then ask one open question: "Anything specific? For example, 'school newsletters are
 junk after a week'." Add the answers to the rules in plain words.
@@ -49,6 +50,10 @@ Write:
   `notify`) named in the summary language, for example "🗑 To delete", "✅ Done", "📬 Svodka",
   and the `notify` switches `ready` and `failed` from question 9 (`email` stays `true`).
   `config.example.json` shows every key.
+- `ui.json` — only if the summary language is neither English nor Russian: translate the
+  values of `ui/en.json` into that language, keeping the keys, `{placeholders}` and emoji
+  exactly, and save it in the repository root. The card and the push use it; without it
+  their buttons and headings stay in English (the summary itself is in any language anyway).
 
 Set the schedule in `.github/workflows/daily.yml` to about 07:17 in the user's
 timezone, converted to UTC. Keep the minute off the hour: GitHub delays runs

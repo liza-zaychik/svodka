@@ -8,6 +8,8 @@ const DEFAULTS = {
   timezone: "UTC",
   limits: { threadsPerRun: 80, unread: 12, check: 3, marked: 60 },
   labels: { trash: "🗑 To delete", done: "✅ Done", notify: "📬 Svodka" },
+  // Read the full text of emails that need action, so their gists carry real amounts and deadlines.
+  fullTextForAction: true,
   notify: {
     ready: true, // push when the summary is ready
     failed: true, // push when a run fails

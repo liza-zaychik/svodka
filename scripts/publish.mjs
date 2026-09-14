@@ -1,7 +1,7 @@
 // Step 3: put the triaged summary into the mailbox as a draft.
 // The card picks it up from there — it has no other way to get the data.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { auth, saveDraft, dropOldDrafts, ensureLabels } from "./gmail.mjs";
 import { config, dryRun, DRAFT_SUBJECT } from "./config.mjs";
 
@@ -30,11 +30,18 @@ const { unreadTotal } = JSON.parse(readFileSync("out/mail.json", "utf8"));
 await auth();
 const ids = await ensureLabels([config.labels.trash, config.labels.done]);
 
-const date = new Date().toLocaleDateString(config.language === "ru" ? "ru-RU" : "en-GB", {
-  day: "2-digit",
-  month: "2-digit",
-  timeZone: config.timezone,
-});
+// Any language code works as a locale; an unknown one falls back to British English.
+const dateIn = (locale) =>
+  new Date().toLocaleDateString(locale, { day: "2-digit", month: "2-digit", timeZone: config.timezone });
+let date;
+try {
+  date = dateIn({ ru: "ru-RU", en: "en-GB" }[config.language] || config.language);
+} catch {
+  date = dateIn("en-GB");
+}
+
+// Interface texts for a language the card has no built-in translation for (ui.json, made by /setup).
+const ui = existsSync("ui.json") ? JSON.parse(readFileSync("ui.json", "utf8")).card : null;
 
 // The date, counters and service fields come from code, not the model: it can get numbers wrong when copying them.
 const payload = {
@@ -42,6 +49,7 @@ const payload = {
   unreadTotal,
   language: config.language,
   dryRun,
+  ...(ui ? { ui } : {}),
   labels: {
     trash: { id: ids[config.labels.trash], name: config.labels.trash },
     done: { id: ids[config.labels.done], name: config.labels.done },

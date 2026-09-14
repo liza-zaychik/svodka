@@ -100,6 +100,8 @@ Prefer doing it without Claude? The same steps as a plain checklist:
   switches: `notify.ready` (the summary is ready), `notify.failed` (a run failed),
   `notify.email` (deliver the push as an email in your inbox). Set any of them to
   `false` to switch it off. See `config.example.json`.
+- `ui.json` — buttons and headings of the card and the push in your language, if it is
+  neither English nor Russian. `/setup` translates `ui/en.json` for you.
 - **Dry run** — the summary is built, but nothing in your mailbox gets labelled.
   Switch it on with a repository variable `DRY_RUN` set to `true` (on GitHub:
   Settings → Secrets and variables → Actions → Variables). `/setup` turns it on
@@ -109,8 +111,10 @@ Prefer doing it without Claude? The same steps as a plain checklist:
 ## Privacy and safety
 
 - **What Claude sees:** the sender, subject and the first 200 characters of each
-  conversation's latest message. No message bodies, no attachments, and no links
-  are opened.
+  conversation's latest message. Only for the few emails in "Needs action" it reads
+  the full text, so the gist carries the real amounts and deadlines — switch that
+  off with `fullTextForAction: false` in `config.json`. Attachments are never read
+  and links are never opened.
 - **Where the summary lives:** as a draft in your own mailbox. It is not stored
   anywhere else.
 - **Logs:** only counters are logged. Keep the repository private anyway —

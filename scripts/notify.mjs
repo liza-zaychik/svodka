@@ -2,7 +2,7 @@
 //
 // The main channel is an email to your own mailbox: Gmail itself delivers the notification,
 // nothing needs to be installed. The email isn't sent but put into the mailbox directly;
-// the previous notification is archived at the same time, so they don't pile up.
+// the previous notification goes to Trash, so they don't pile up.
 //
 // Additionally, if configured: ntfy (secret NTFY_TOPIC)
 // and Telegram (secrets TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID).
@@ -24,28 +24,44 @@ if (mode !== "test" && !config.notify[switchName]) {
 }
 const { NTFY_TOPIC, NTFY_SERVER, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, CARD_URL, RUN_URL } = process.env;
 
-const TEXT = {
-  ru: {
-    ok: { title: "📬 Сводка готова", body: (c) => `Требует действия: ${c.act} · проверить: ${c.check} · помечено: ${c.marked}`, open: "Открыть сводку" },
-    fail: { title: "⚠️ Сводка не собралась", body: () => "Прогон упал. Прошлая сводка на месте, причина в логе.", open: "Открыть лог" },
-    test: { title: "📬 Проверка уведомления", body: () => "Если это пришло пушем — уведомления работают.", open: "Открыть сводку" },
-    dry: "Пробный режим — ярлыки не ставились. ",
-    sender: "Сводка",
+// Built-in texts for English and Russian, generated from ui/en.json. Any other language
+// comes from ui.json, translated once by /setup; missing keys fall back to English.
+const BUILT_IN = {
+  "en": {
+    "sender": "Svodka",
+    "readyTitle": "📬 Summary is ready",
+    "readyBody": "Needs action: {act} · to check: {check} · marked: {marked}",
+    "failedTitle": "⚠️ Summary failed",
+    "failedBody": "The run failed. The previous summary is still there; see the log.",
+    "testTitle": "📬 Notification test",
+    "testBody": "If this arrived as a push, notifications work.",
+    "openSummary": "Open summary",
+    "openLog": "Open log",
+    "dryPrefix": "Dry run — no labels applied. "
   },
-  en: {
-    ok: { title: "📬 Summary is ready", body: (c) => `Needs action: ${c.act} · to check: ${c.check} · marked: ${c.marked}`, open: "Open summary" },
-    fail: { title: "⚠️ Summary failed", body: () => "The run failed. The previous summary is still there; see the log.", open: "Open log" },
-    test: { title: "📬 Notification test", body: () => "If this arrived as a push, notifications work.", open: "Open summary" },
-    dry: "Dry run — no labels applied. ",
-    sender: "Svodka",
-  },
+  "ru": {
+    "sender": "Сводка",
+    "readyTitle": "📬 Сводка готова",
+    "readyBody": "Требует действия: {act} · проверить: {check} · помечено: {marked}",
+    "failedTitle": "⚠️ Сводка не собралась",
+    "failedBody": "Прогон упал. Прошлая сводка на месте, причина в логе.",
+    "testTitle": "📬 Проверка уведомления",
+    "testBody": "Если это пришло пушем — уведомления работают.",
+    "openSummary": "Открыть сводку",
+    "openLog": "Открыть лог",
+    "dryPrefix": "Пробный режим — ярлыки не ставились. "
+  }
 };
-const t = TEXT[config.language] || TEXT.en;
+const own = existsSync("ui.json") ? JSON.parse(readFileSync("ui.json", "utf8")).push || {} : {};
+const t = { ...BUILT_IN.en, ...(BUILT_IN[config.language] || {}), ...own };
+const fmt = (str, vars = {}) => String(str).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 
 const data = mode === "ok" && existsSync("out/svodka.json") ? JSON.parse(readFileSync("out/svodka.json", "utf8")) : {};
 const n = (k) => (data[k] || []).length;
-const title = t[mode].title;
-const message = (data.dryRun ? t.dry : "") + t[mode].body({ act: n("act"), check: n("check"), marked: n("marked") });
+const event = mode === "ok" ? "ready" : mode === "fail" ? "failed" : "test";
+const title = t[event + "Title"];
+const message = (data.dryRun ? t.dryPrefix : "") + fmt(t[event + "Body"], { act: n("act"), check: n("check"), marked: n("marked") });
+const openText = mode === "fail" ? t.openLog : t.openSummary;
 const url = mode === "fail" ? RUN_URL : CARD_URL;
 
 const warn = (what, e) => console.log(`::warning::Push via ${what} not delivered: ${e.message || e}`);
@@ -65,7 +81,7 @@ if (config.notify.email && process.env.GMAIL_REFRESH_TOKEN) {
 
     const enc = (s) => `=?UTF-8?B?${Buffer.from(s, "utf8").toString("base64")}?=`;
     const button = url
-      ? `<a href="${url.replace(/"/g, "%22")}" style="display:inline-block;background:#2f5fd0;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600">${t[mode].open}</a>`
+      ? `<a href="${url.replace(/"/g, "%22")}" style="display:inline-block;background:#2f5fd0;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600">${openText}</a>`
       : "";
     const html =
       `<div style="font:16px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif;max-width:480px">` +
@@ -122,7 +138,7 @@ if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: `${title}\n${message}`,
-        ...(url ? { reply_markup: { inline_keyboard: [[{ text: t[mode].open, url }]] } } : {}),
+        ...(url ? { reply_markup: { inline_keyboard: [[{ text: openText, url }]] } } : {}),
       }),
     });
     if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);

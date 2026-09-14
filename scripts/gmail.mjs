@@ -225,3 +225,69 @@ export async function importMessage(mime, labelIds) {
 export async function trashThread(threadId) {
   return call(`/threads/${threadId}/trash`, { method: "POST" });
 }
+
+function findPart(part, mime) {
+  if (!part) return null;
+  if (part.mimeType === mime && part.body?.data) return part;
+  for (const child of part.parts || []) {
+    const found = findPart(child, mime);
+    if (found) return found;
+  }
+  return null;
+}
+
+function decodePart(part) {
+  const bytes = Buffer.from(part.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+  const type = (part.headers || []).find((h) => h.name.toLowerCase() === "content-type")?.value || "";
+  const charset = /charset="?([^";\s]+)"?/i.exec(type)?.[1] || "utf-8";
+  try {
+    return new TextDecoder(charset).decode(bytes); // Russian mail still comes in windows-1251 and koi8-r
+  } catch {
+    return bytes.toString("utf8");
+  }
+}
+
+const htmlToText = (html) =>
+  html
+    .replace(/<(style|script)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<br\s*\/?>|<\/(p|div|tr|li|h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+// Quoted history repeats earlier messages; only the new part needs reading.
+// Forwarded content is kept on purpose: in a forward it is the point of the email.
+const REPLY_MARKER = /^(On .+ wrote:|.+ (пишет|написал|написала|написал\(а\)):|-{2,} ?(Original Message|Исходное сообщение) ?-{2,})\s*$/im;
+
+function freshText(text) {
+  const cut = text.search(REPLY_MARKER);
+  return (cut > 0 ? text.slice(0, cut) : text)
+    .split("\n")
+    .filter((line) => !line.startsWith(">"))
+    .join("\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Full text of the latest incoming message in a thread, as plain text.
+ * Read only for conversations that need action — a handful a day.
+ */
+export async function latestIncomingText(threadId, maxChars = 3000) {
+  const t = await call(`/threads/${threadId}?format=full`);
+  const incoming = (t.messages || [])
+    .filter((m) => !(m.labelIds || []).some((l) => l === "DRAFT" || l === "TRASH" || l === "SENT"))
+    .sort((a, b) => Number(a.internalDate) - Number(b.internalDate));
+  const latest = incoming[incoming.length - 1];
+  if (!latest) return "";
+
+  const plain = findPart(latest.payload, "text/plain");
+  const html = plain ? null : findPart(latest.payload, "text/html");
+  const text = plain ? decodePart(plain) : html ? htmlToText(decodePart(html)) : "";
+  return freshText(text).slice(0, maxChars);
+}
