@@ -67,7 +67,10 @@ Prefer doing it by hand? `/setup` is a readable checklist:
 
 - `rules.md` — retention periods, the never-touch list, section priorities.
   Plain words; Claude reads it on every run. Start from `rules.example.md`.
-- `config.json` — summary language, timezone, section limits, label names.
+- `config.json` — summary language, timezone, section limits, label names, and push
+  switches: `notify.ready` (the summary is ready), `notify.failed` (a run failed),
+  `notify.email` (deliver the push as an email in your inbox). Set any of them to
+  `false` to switch it off. See `config.example.json`.
 - Repository variable `DRY_RUN=true` — the full summary, but no labels are applied.
 - `.github/workflows/daily.yml` — the schedule.
 

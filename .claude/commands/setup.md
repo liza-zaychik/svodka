@@ -33,6 +33,7 @@ Main questions:
 6. Marketing and newsletters become junk after how many days (7).
 7. Receipts: groceries / clothing and cosmetics / electronics (7 days / 2 months / 1 year).
 8. Do they have business, accounting or tax mail? (Adds it to "never touch".)
+9. Push notifications: when the summary is ready (yes), when a run fails (yes).
 
 Offer "more details" for: past trips (6 months), appointment confirmations (right
 after the event), stale confirmations (2 weeks), things that are junk immediately
@@ -45,7 +46,9 @@ junk after a week'." Add the answers to the rules in plain words.
 Write:
 - `rules.md` — based on `rules.example.md`, with the answers applied, in the summary language;
 - `config.json` — `language`, `timezone`, `limits`, and `labels` (`trash`, `done`,
-  `notify`) named in the summary language, for example "🗑 To delete", "✅ Done", "📬 Svodka".
+  `notify`) named in the summary language, for example "🗑 To delete", "✅ Done", "📬 Svodka",
+  and the `notify` switches `ready` and `failed` from question 9 (`email` stays `true`).
+  `config.example.json` shows every key.
 
 Set the schedule in `.github/workflows/daily.yml` to about 07:17 in the user's
 timezone, converted to UTC. Keep the minute off the hour: GitHub delays runs

@@ -15,6 +15,13 @@ import { config } from "./config.mjs";
 import { auth, profile, ensureLabels, threadsWithLabel, trashThread, importMessage } from "./gmail.mjs";
 
 const mode = ["ok", "fail", "test"].includes(process.argv[2]) ? process.argv[2] : "ok";
+
+// The owner can switch pushes off in config.json. An explicit test always sends.
+const switchName = mode === "fail" ? "failed" : "ready";
+if (mode !== "test" && !config.notify[switchName]) {
+  console.log(`Push is switched off in config.json (notify.${switchName}).`);
+  process.exit(0);
+}
 const { NTFY_TOPIC, NTFY_SERVER, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, CARD_URL, RUN_URL } = process.env;
 
 const TEXT = {
@@ -44,7 +51,7 @@ const url = mode === "fail" ? RUN_URL : CARD_URL;
 const warn = (what, e) => console.log(`::warning::Push via ${what} not delivered: ${e.message || e}`);
 const sent = [];
 
-if (config.notifyByEmail !== false && process.env.GMAIL_REFRESH_TOKEN) {
+if (config.notify.email && process.env.GMAIL_REFRESH_TOKEN) {
   try {
     await auth();
     const { emailAddress } = await profile();

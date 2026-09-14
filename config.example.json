@@ -1,0 +1,20 @@
+{
+  "language": "en",
+  "timezone": "UTC",
+  "limits": {
+    "threadsPerRun": 80,
+    "unread": 12,
+    "check": 3,
+    "marked": 60
+  },
+  "labels": {
+    "trash": "🗑 To delete",
+    "done": "✅ Done",
+    "notify": "📬 Svodka"
+  },
+  "notify": {
+    "ready": true,
+    "failed": true,
+    "email": true
+  }
+}
