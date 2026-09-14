@@ -42,6 +42,13 @@ Nothing is ever deleted automatically.
 Sign-in alerts, new passkeys, "new device" notices: **never mark them as junk**.
 Show them in the summary as one collapsed line with a count.
 
+## Phishing
+
+Emails that look like phishing — urgent demands to pay, to confirm a password or to
+"unblock" an account, especially when the sender's address does not match the
+organisation — go only to "To check", marked "looks like phishing". Never to
+"Needs action".
+
 ## Summary sections
 
 **🔴 Needs action** — awaiting a reply or a payment, or has a deadline.

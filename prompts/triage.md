@@ -72,6 +72,11 @@ summary date, counters or other service fields — code adds them.
   Leave the rest out.
 - `marked` — at most `limits.marked`, strictly by the retention periods in `rules.md`.
 - Security and sign-in notifications never go into `marked`.
+- Anything that looks like phishing — an urgent demand to pay, to confirm a password
+  or to "unblock" an account, especially from an address that does not match the
+  organisation — never goes into `act` or `unread`. Put it into `check` with a
+  `why` saying it looks like phishing, in the summary language. It takes priority
+  within the `check` limit.
 
 ## Before putting anything into `marked`
 
