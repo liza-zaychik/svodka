@@ -232,9 +232,21 @@
   const localeFor = (code) => ({ ru: "ru-RU", en: "en-GB" })[code] || code || "en-GB";
   const pick = (code, extra) => ({ ...I18N.en, ...(I18N[code] || {}), ...(extra || {}) });
 
-  // Until the summary says which language it is in, follow the browser.
-  let lang = (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
-  let T = pick(lang);
+  // Until the summary arrives, speak the language remembered from the last open, or the browser's.
+  // Storage can be unavailable (private windows, previews) — then the browser language it is.
+  const remember = (code, ui) => {
+    try {
+      localStorage.setItem("svodka.lang", code);
+      localStorage.setItem("svodka.ui", JSON.stringify(ui || null));
+    } catch (e) {}
+  };
+  let lang = null, savedUi = null;
+  try {
+    lang = localStorage.getItem("svodka.lang");
+    savedUi = JSON.parse(localStorage.getItem("svodka.ui") || "null");
+  } catch (e) {}
+  if (!lang) lang = (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
+  let T = pick(lang, savedUi);
 
   const mcp = () => (window.claude && window.claude.mcp) ? window.claude.mcp : null;
   const picks = new Map();
@@ -482,6 +494,7 @@
     if (data.language) {
       lang = data.language;
       T = pick(lang, data.ui);
+      remember(lang, data.ui);
       applyStatic();
     }
     labels = data.labels || { trash: null, done: null };
