@@ -11,8 +11,21 @@ a tap — from your phone too.
 
 ## Why another email assistant
 
-Most AI email tools ask you to trust them: *the AI will handle your inbox*.
-svodka takes the opposite stance — **you can audit everything it does**.
+AI email assistants are great at sorting mail into smart folders and drafting
+replies for you — replies that often say nothing. But you still have to go into
+your inbox and look. The folders are tidier; the inbox is still the inbox.
+
+What if your inbox gives you hives — and you are still afraid of missing
+something important?
+
+svodka takes that fear away. You always have one link with a summary of your
+mail. Open it or don't. Check it whenever you like, or get a short reminder email
+every morning. But when you do open it, you will not miss the one message that
+matters: a bill, a fine, a reply from a real person — at the top, in one line.
+
+And it does not matter what language an email came in: the summary is written in yours.
+
+How it stays trustworthy:
 
 - **Your rules, in plain words.** A grocery receipt is junk after a week, an
   electronics receipt is kept for a year for the warranty, a sign-in code is junk
@@ -53,14 +66,30 @@ Your computer does not need to be on, and there is no server.
 
 ## Setup
 
-1. **Use this template → Create a new repository.** Make it **private** — see
-   [Privacy](#privacy-and-safety) for why.
-2. Clone it and open the folder in Claude Code.
-3. Run `/setup`. Claude asks a few questions about your rules, walks you through
-   the Google Cloud key (about 15 minutes, once), stores the secrets, publishes
-   your card and starts a dry run.
+1. **Make your own copy.** On this page press **Use this template → Create a new
+   repository**. Pick your account, give the copy a name (for example `svodka`),
+   choose **Private** — only you will see it, and it will hold your rules and run
+   logs — and press **Create repository**.
 
-Prefer doing it by hand? `/setup` is a readable checklist:
+2. **Download it to your computer — "clone" it.** Cloning means downloading your
+   copy as a folder you can work in. The easiest way is GitHub Desktop:
+   1. Install [GitHub Desktop](https://desktop.github.com) and sign in with your GitHub account.
+   2. Open **File → Clone repository**.
+   3. On the **GitHub.com** tab pick your new copy.
+   4. In **Local path** choose where the folder will live, for example
+      `Documents/GitHub/svodka`, and press **Clone**.
+
+   If you prefer a terminal, it is one command: `gh repo clone <your-account>/svodka`.
+
+3. **Open the folder in Claude Code.** In the Claude desktop app, go to the
+   **Code** tab and choose that folder.
+
+4. **Run `/setup`.** Type `/setup` in the chat. Claude asks about your rules, walks
+   you through the Google Cloud key (about 15 minutes, once), stores the secrets in
+   your copy, publishes your card and starts a dry run — a run in which nothing in
+   your mailbox gets labelled.
+
+Prefer doing it without Claude? The same steps as a plain checklist:
 [.claude/commands/setup.md](.claude/commands/setup.md).
 
 ## Configuration
