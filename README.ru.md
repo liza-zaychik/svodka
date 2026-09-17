@@ -2,11 +2,11 @@
 <p align="center"><b>Одна карточка в день вместо почты.</b></p>
 
 <p align="center">
-  <a href="https://claude.ai/code/artifact/d217ae0f-3304-4592-ba26-29bfe6609ec7"><img src="docs/card.png" width="420" alt="Карточка дня: требует действия, непрочитанное, проверить, помечено"></a>
+  <a href="https://claude.ai/artifact/SwheYoA8c9eMDQhLCURFD8"><img src="docs/card.png" width="420" alt="Карточка дня: требует действия, непрочитанное, проверить, помечено"></a>
 </p>
 
 <p align="center">
-  <a href="https://claude.ai/code/artifact/d217ae0f-3304-4592-ba26-29bfe6609ec7"><b>▶ Открыть демо-карточку</b></a> — выдуманная почта, ничего не подключено, ставить нечего
+  <a href="https://claude.ai/artifact/SwheYoA8c9eMDQhLCURFD8"><b>▶ Открыть демо-карточку</b></a> — выдуманная почта, ничего не подключено, ставить нечего
 </p>
 
 <p align="center">

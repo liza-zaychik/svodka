@@ -2,11 +2,11 @@
 <p align="center"><b>One card a day instead of your inbox.</b></p>
 
 <p align="center">
-  <a href="https://claude.ai/code/artifact/d217ae0f-3304-4592-ba26-29bfe6609ec7"><img src="docs/card.png" width="420" alt="The daily card: needs action, unread, to check, marked"></a>
+  <a href="https://claude.ai/artifact/SwheYoA8c9eMDQhLCURFD8"><img src="docs/card.png" width="420" alt="The daily card: needs action, unread, to check, marked"></a>
 </p>
 
 <p align="center">
-  <a href="https://claude.ai/code/artifact/d217ae0f-3304-4592-ba26-29bfe6609ec7"><b>▶ Open the demo card</b></a> — made-up mail, nothing connected, nothing to install
+  <a href="https://claude.ai/artifact/SwheYoA8c9eMDQhLCURFD8"><b>▶ Open the demo card</b></a> — made-up mail, nothing connected, nothing to install
 </p>
 
 <p align="center">
