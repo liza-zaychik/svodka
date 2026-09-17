@@ -77,8 +77,9 @@
                 border:1px solid var(--line); padding:13px 14px; }
   .barnote { max-width:560px; margin:6px auto 0; font-size:12px; color:var(--muted); text-align:center; }
 
-  .demo { background:color-mix(in srgb, var(--blue) 12%, transparent); border:1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
-           color:var(--fg); border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:14px; }
+  .demo { background:color-mix(in srgb, var(--blue) 12%, transparent);
+           border:1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+           border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:14px; }
 
   footer { margin-top:32px; font-size:12.5px; color:var(--muted);
            border-top:1px solid var(--line); padding-top:12px; }
@@ -112,7 +113,8 @@
 </div>
 
 <script>
-  // Demo stand-in for the Gmail connector. Reads nothing, changes nothing.
+  // A stand-in for the Gmail connector: it reads nothing and changes nothing.
+  // The page never touches the platform connector API, so there is nothing to grant it.
   const DEMO = {
   "date": "17/09",
   "unreadTotal": 412,
@@ -251,15 +253,14 @@
     }
   ]
 };
-  window.claude = {
-    mcp: {
-      callTool: async (server, tool) => {
-        await new Promise((r) => setTimeout(r, 150));
-        if (tool === "list_drafts") {
-          return { payload: { drafts: [{ date: new Date().toISOString(), plaintextBody: JSON.stringify(DEMO) }] } };
-        }
-        return { payload: {} }; // label, unlabel, trash: the card shows the result, the mailbox is untouched
-      },
+
+  const DEMO_CONNECTOR = {
+    callTool: async (server, tool) => {
+      await new Promise((r) => setTimeout(r, 150));
+      if (tool === "list_drafts") {
+        return { payload: { drafts: [{ date: new Date().toISOString(), plaintextBody: JSON.stringify(DEMO) }] } };
+      }
+      return { payload: {} }; // label, unlabel, trash: the card shows the result, no mailbox is involved
     },
   };
 </script>
@@ -405,7 +406,7 @@
   if (!lang) lang = (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
   let T = pick(lang, savedUi);
 
-  const mcp = () => (window.claude && window.claude.mcp) ? window.claude.mcp : null;
+  const mcp = () => DEMO_CONNECTOR;
   const picks = new Map();
 
   const $ = (id) => document.getElementById(id);
