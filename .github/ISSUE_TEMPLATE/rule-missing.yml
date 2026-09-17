@@ -1,0 +1,24 @@
+name: It sorted something wrong
+description: An email landed in the wrong section, or a rule is missing
+labels: ["rules"]
+body:
+  - type: markdown
+    attributes:
+      value: Please leave out anything private — the kind of email is enough.
+  - type: textarea
+    id: mail
+    attributes:
+      label: What kind of email was it?
+      placeholder: A receipt from a pharmacy.
+    validations:
+      required: true
+  - type: input
+    id: wrong
+    attributes:
+      label: Where did it go, and where should it have gone?
+      placeholder: It was marked as junk, but I keep pharmacy receipts for a year.
+  - type: textarea
+    id: rule
+    attributes:
+      label: The rule in your own words (optional)
+      placeholder: Pharmacy receipts are kept for a year, like electronics.

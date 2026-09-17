@@ -1,0 +1,691 @@
+<title>Svodka demo</title>
+
+<style>
+  :root {
+    --bg:#fff; --fg:#191919; --muted:#6f6f6f; --line:#e6e6e6; --card:#fafafa;
+    --red:#c0392b; --green:#1a7f4b; --amber:#a35a00; --blue:#2f5fd0; --chip:#f2f2f2;
+    --onc:#fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#151719; --fg:#ededed; --muted:#9b9b9b; --line:#2b2e32; --card:#1c1f22;
+            --red:#ef8279; --green:#5fd39b; --amber:#e0a34a; --blue:#7ea6ff; --chip:#24282c;
+            --onc:#151719; }
+  }
+  :root[data-theme="light"]{--bg:#fff;--fg:#191919;--muted:#6f6f6f;--line:#e6e6e6;--card:#fafafa;--red:#c0392b;--green:#1a7f4b;--amber:#a35a00;--blue:#2f5fd0;--chip:#f2f2f2;--onc:#fff;}
+  :root[data-theme="dark"]{--bg:#151719;--fg:#ededed;--muted:#9b9b9b;--line:#2b2e32;--card:#1c1f22;--red:#ef8279;--green:#5fd39b;--amber:#e0a34a;--blue:#7ea6ff;--chip:#24282c;--onc:#151719;}
+
+  body { background:var(--bg); color:var(--fg); margin:0; padding:18px 14px 120px;
+         font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:560px; margin:0 auto; }
+  h1 { font-size:21px; margin:0 0 2px; }
+  .date { color:var(--muted); font-size:14px; margin:0 0 16px; }
+
+  .tiles { display:flex; gap:8px; margin-bottom:8px; }
+  .tile { flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:10px 8px; text-align:center; }
+  .tile b { display:block; font-size:22px; line-height:1.1; }
+  .tile span { font-size:11px; color:var(--muted); }
+
+  .note, .status { font-size:13px; color:var(--muted); background:var(--card);
+                   border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+                   margin-bottom:16px; }
+  .status.err { color:var(--red); }
+
+  h2 { font-size:15px; margin:24px 0 8px; display:flex; align-items:baseline; gap:8px; }
+  h2 .n { font-size:12px; color:var(--muted); font-weight:400; }
+  .hint { font-size:12.5px; color:var(--muted); margin:-4px 0 10px; }
+
+  .mail { border-top:1px solid var(--line); padding:11px 0 12px; }
+  .mail:last-child { border-bottom:1px solid var(--line); }
+  .top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+  .from { font-size:13px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .when { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .subj { font-weight:600; font-size:15px; margin:2px 0 1px; }
+  .gist { font-size:14px; color:var(--muted); }
+  .why { font-size:13px; color:var(--amber); margin-top:4px; }
+
+  .acts { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+  .chip { font:inherit; font-size:13px; line-height:1; text-decoration:none;
+          background:var(--chip); color:var(--fg); border:1px solid var(--line);
+          border-radius:999px; padding:8px 13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .chip:disabled { opacity:.45; cursor:default; }
+  .tone { color:var(--c); background:color-mix(in srgb, var(--c) 9%, transparent);
+          border-color:color-mix(in srgb, var(--c) 45%, var(--line)); }
+  .tone[aria-pressed="true"] { background:var(--c); color:var(--onc); border-color:var(--c); }
+  .t-open { --c:var(--blue); } .t-keep { --c:var(--green); }
+  .t-later { --c:var(--amber); } .t-trash { --c:var(--red); }
+
+  .state { font-size:13px; margin-top:7px; }
+  .state.ok { color:var(--green); }
+  .state.err { color:var(--red); }
+  .done .subj, .done .gist, .done .from { opacity:.5; }
+
+  .marked { border-top:1px solid var(--line); padding:8px 0; }
+  .marked:last-child { border-bottom:1px solid var(--line); }
+  .msubj { font-size:14px; color:var(--fg); text-decoration:none; }
+  .mfrom { font-size:13px; color:var(--muted); }
+  .mwhy { font-size:12.5px; color:var(--muted); margin-top:2px; }
+
+  .bar { position:fixed; left:0; right:0; bottom:0; background:var(--bg);
+         border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+         display:none; }
+  .bar .inner { max-width:560px; margin:0 auto; display:flex; gap:10px; align-items:center; }
+  .bar button { font:inherit; font-weight:600; font-size:15px; color:#fff; background:var(--blue);
+                border:0; border-radius:10px; padding:13px 18px; cursor:pointer; flex:1; }
+  .bar button:disabled { opacity:.4; cursor:default; }
+  .bar .reset { flex:0 0 auto; background:transparent; color:var(--muted); font-weight:400;
+                border:1px solid var(--line); padding:13px 14px; }
+  .barnote { max-width:560px; margin:6px auto 0; font-size:12px; color:var(--muted); text-align:center; }
+
+  .demo { background:color-mix(in srgb, var(--blue) 12%, transparent); border:1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+           color:var(--fg); border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:14px; }
+
+  footer { margin-top:32px; font-size:12.5px; color:var(--muted);
+           border-top:1px solid var(--line); padding-top:12px; }
+</style>
+<main>
+  <div class="demo">Demo. This page is not connected to any mailbox — the mail below is made up,
+  and the buttons only pretend to work. In the real thing they act on your Gmail.</div>
+  <h1 id="title"></h1>
+  <p class="date" id="date"></p>
+
+  <div id="status" class="status"></div>
+
+  <div class="tiles" id="tiles" hidden>
+    <div class="tile"><b id="t-marked">0</b><span id="l-marked"></span></div>
+    <div class="tile"><b id="t-act">0</b><span id="l-act"></span></div>
+    <div class="tile"><b id="t-unread">0</b><span id="l-unread"></span></div>
+  </div>
+
+  <div class="note" id="note" hidden></div>
+
+  <div id="sections"></div>
+  <footer id="foot" hidden></footer>
+</main>
+
+<div class="bar" id="bar">
+  <div class="inner">
+    <button id="apply" disabled></button>
+    <button id="reset" class="reset"></button>
+  </div>
+  <div class="barnote" id="barnote"></div>
+</div>
+
+<script>
+  // Demo stand-in for the Gmail connector. Reads nothing, changes nothing.
+  const DEMO = {
+  "date": "17/09",
+  "unreadTotal": 412,
+  "language": "en",
+  "dryRun": false,
+  "labels": {
+    "trash": {
+      "id": "DEMO1",
+      "name": "🗑 To delete"
+    },
+    "done": {
+      "id": "DEMO2",
+      "name": "✅ Done"
+    }
+  },
+  "act": [
+    {
+      "threadId": "d1",
+      "from": "City utilities",
+      "subj": "September bill",
+      "when": "today",
+      "gist": "€128.40 for September, due on the 30th; after that they add 1.5% a month."
+    },
+    {
+      "threadId": "d2",
+      "from": "Dr. Weber's office",
+      "subj": "Re: moving the appointment",
+      "when": "yesterday",
+      "gist": "They offer Thursday 11:00 instead of Tuesday and ask you to confirm by tomorrow."
+    },
+    {
+      "threadId": "d3",
+      "from": "Notion",
+      "subj": "Payment failed",
+      "when": "2 days ago",
+      "gist": "The card was declined twice; the workspace goes read-only in five days unless you update it."
+    }
+  ],
+  "unread": [
+    {
+      "threadId": "d4",
+      "from": "Anna",
+      "subj": "Photos from Sunday",
+      "when": "today",
+      "gist": "Anna sent the photos and asks which ones to print."
+    },
+    {
+      "threadId": "d5",
+      "from": "Revolut",
+      "subj": "August statement",
+      "when": "today",
+      "gist": "The monthly statement is ready in the app."
+    },
+    {
+      "threadId": "d6",
+      "from": "Apple",
+      "subj": "Your receipt",
+      "when": "yesterday",
+      "gist": "€2.99 for iCloud storage, charged to the card ending 4417."
+    },
+    {
+      "threadId": "d7",
+      "from": "Lufthansa",
+      "subj": "Booking LH1042 confirmed",
+      "when": "3 days ago",
+      "gist": "Frankfurt–Lisbon on 12 October, seat 14A; check-in opens 24 hours before."
+    },
+    {
+      "threadId": "d8",
+      "from": "Landlord",
+      "subj": "Water shut-off on Friday",
+      "when": "4 days ago",
+      "gist": "No water between 9:00 and 15:00 on Friday while they fix the riser."
+    }
+  ],
+  "check": [
+    {
+      "threadId": "d9",
+      "from": "PayPaI Security",
+      "subj": "Unusual sign-in — confirm your account",
+      "when": "today",
+      "gist": "Asks you to confirm the account through a link within 24 hours.",
+      "why": "looks like phishing: the sender's name uses a capital i instead of an l"
+    },
+    {
+      "threadId": "d10",
+      "from": "Google",
+      "subj": "3 sign-in alerts",
+      "when": "2 days ago",
+      "gist": "Sign-ins from a new iPhone and two from a Mac.",
+      "why": "security notifications — never marked as junk"
+    }
+  ],
+  "marked": [
+    {
+      "threadId": "d11",
+      "from": "Zara",
+      "subj": "New season, 20% off",
+      "when": "10 days ago",
+      "why": "newsletter older than 7 days"
+    },
+    {
+      "threadId": "d12",
+      "from": "Corner Market",
+      "subj": "Your receipt",
+      "when": "9 days ago",
+      "why": "grocery receipt"
+    },
+    {
+      "threadId": "d13",
+      "from": "Medium Daily",
+      "subj": "Today's highlights",
+      "when": "8 days ago",
+      "why": "news digest"
+    },
+    {
+      "threadId": "d14",
+      "from": "Booking.com",
+      "subj": "How was your stay?",
+      "when": "12 days ago",
+      "why": "review request"
+    },
+    {
+      "threadId": "d15",
+      "from": "Fitness Club",
+      "subj": "Class on 2 September confirmed",
+      "when": "15 days ago",
+      "why": "the class has passed"
+    },
+    {
+      "threadId": "d16",
+      "from": "Slack",
+      "subj": "Confirm your email",
+      "when": "3 weeks ago",
+      "why": "stale confirmation"
+    }
+  ]
+};
+  window.claude = {
+    mcp: {
+      callTool: async (server, tool) => {
+        await new Promise((r) => setTimeout(r, 150));
+        if (tool === "list_drafts") {
+          return { payload: { drafts: [{ date: new Date().toISOString(), plaintextBody: JSON.stringify(DEMO) }] } };
+        }
+        return { payload: {} }; // label, unlabel, trash: the card shows the result, the mailbox is untouched
+      },
+    },
+  };
+</script>
+<script>
+  const SERVER = "Gmail";
+  const GM = (id) => "https://mail.google.com/mail/u/0/#all/" + id;
+
+  // Label ids arrive with the summary: every mailbox has its own.
+  let labels = { trash: null, done: null };
+  let dry = false;
+
+  // Built-in interface texts for English and Russian, generated from ui/en.json.
+  // Any other language arrives with the summary as data.ui — translated once by /setup.
+  // Missing keys fall back to English.
+  const I18N = {
+    "en": {
+      "title": "Email summary",
+      "loading": "loading…",
+      "reading": "Reading the latest summary from your mail…",
+      "tileMarked": "marked",
+      "tileAct": "need action",
+      "tileUnread": "unread",
+      "note": "Pick your decisions — nothing happens until you press the button below. Everything is reversible: Trash keeps mail for 30 days, labels can be removed.",
+      "dryNote": "Dry run: the triage is real, but no labels were applied.",
+      "noDoneLabel": "The “Keep” button appears after the next run.",
+      "nothing": "Nothing selected",
+      "apply": "Apply: {n}",
+      "applying": "Applying {i} of {n}",
+      "done": "Done: {ok}",
+      "doneFailed": "Done: {ok}, failed: {failed}",
+      "reset": "Reset",
+      "later": "Remind me later: {n} — they come back in the next summary",
+      "undoHint": "Changed your mind? Press “Undo” on the message.",
+      "optRead": "Keep · don't show again",
+      "optLater": "Remind me later",
+      "optTrash": "Move to Trash",
+      "reply": "Reply",
+      "noSubject": "(no subject)",
+      "why": "Why here: ",
+      "actTitle": "🔴 Needs action",
+      "actHint": "Awaiting a reply or a payment, or has a deadline.",
+      "unreadTitle": "📥 Unread — most important first",
+      "unreadHint": "",
+      "checkTitle": "❓ To check",
+      "checkHint": "The triage did not dare to decide these on its own.",
+      "markedTitle": "🗑 Marked",
+      "defaultTrash": "🗑 To delete",
+      "markedHint": "The “{name}” label is already applied. Nothing was deleted — clean up in Gmail whenever you like. ",
+      "markedHintDry": "Dry run: the “{name}” label was not applied, this is only a suggestion. ",
+      "openLabel": "Open the label in Gmail",
+      "kept": "kept · won't show again",
+      "trashed": "in Trash",
+      "undo": "Undo",
+      "restored": "restored",
+      "dateLine": "for {date}",
+      "builtAt": " · built {time}",
+      "noDrafts": "No summary yet. It is built every morning — either the run has not happened yet, or it failed.",
+      "broken": "The summary in your mail is damaged — the run wrote something wrong. Run it again.",
+      "foot": "Built by going through conversations one by one, not by keyword search. No links were opened and no attachments were read. The summary refreshes itself every morning.",
+      "errReauth": "Gmail access has expired — reconnect the connector in claude.ai settings.",
+      "errNotConnected": "The Gmail connector is not connected — turn it on in claude.ai settings.",
+      "errSelection": "Several Gmail connectors are connected — choose one.",
+      "errNotInManifest": "This page was not given access to that action.",
+      "errBlocked": "Blocked by an access policy.",
+      "errNoAccess": "This page cannot reach your mail here. Open it on claude.ai with your account.",
+      "errUnavailable": "Gmail did not respond, try again.",
+      "errTool": "Gmail returned an error: {message}",
+      "errOther": "Something went wrong: {code} {message}"
+    },
+    "ru": {
+      "title": "Сводка почты",
+      "loading": "загружаю…",
+      "reading": "Читаю свежую сводку из почты…",
+      "tileMarked": "помечено",
+      "tileAct": "требует действия",
+      "tileUnread": "непрочитанных",
+      "note": "Отмечай решения — ничего не происходит, пока не нажмёшь кнопку внизу. Всё обратимо: корзина хранит письма 30 дней, ярлык снимается.",
+      "dryNote": "Пробный режим: разбор настоящий, но ярлыки в почте не ставились.",
+      "noDoneLabel": "Кнопка «Оставить» появится после следующего прогона.",
+      "nothing": "Ничего не выбрано",
+      "apply": "Выполнить: {n}",
+      "applying": "Выполняю {i} из {n}",
+      "done": "Готово: {ok}",
+      "doneFailed": "Готово: {ok}, с ошибкой: {failed}",
+      "reset": "Сбросить",
+      "later": "Напомнить позже: {n} — придут в следующей сводке",
+      "undoHint": "Передумаешь — жми «Вернуть» у нужного письма.",
+      "optRead": "Оставить · больше не показывать",
+      "optLater": "Напомнить позже",
+      "optTrash": "В корзину",
+      "reply": "Ответить",
+      "noSubject": "(без темы)",
+      "why": "Почему сюда: ",
+      "actTitle": "🔴 Требует действия",
+      "actHint": "Ждут ответа, оплаты или есть дедлайн.",
+      "unreadTitle": "📥 Непрочитанное — важное сверху",
+      "unreadHint": "",
+      "checkTitle": "❓ Проверить",
+      "checkHint": "Тут разбор не рискнул решать сам.",
+      "markedTitle": "🗑 Помечено",
+      "defaultTrash": "🗑 На удаление",
+      "markedHint": "Ярлык «{name}» уже стоит. Из почты ничего не удалено — почистить можно в Gmail. ",
+      "markedHintDry": "Пробный режим: ярлык «{name}» не ставился, это только предложение. ",
+      "openLabel": "Открыть ярлык в Gmail",
+      "kept": "оставлено · в сводке больше не покажу",
+      "trashed": "в корзине",
+      "undo": "Вернуть",
+      "restored": "возвращено",
+      "dateLine": "за {date}",
+      "builtAt": " · собрана {time}",
+      "noDrafts": "Свежей сводки нет. Она собирается каждое утро — либо прогон ещё не проходил, либо упал.",
+      "broken": "Сводка в почте есть, но она испорчена — прогон записал не то. Нужен повторный прогон.",
+      "foot": "Собрано перебором переписок, без поиска по словам. Ссылки из писем не открывались, вложения не читались. Сводка обновляется сама каждое утро.",
+      "errReauth": "Доступ к Gmail истёк — переподключи коннектор в настройках claude.ai.",
+      "errNotConnected": "Коннектор Gmail не подключён — включи его в настройках claude.ai.",
+      "errSelection": "Подключено несколько Gmail — надо выбрать один.",
+      "errNotInManifest": "Странице не выдали доступ к этому действию.",
+      "errBlocked": "Заблокировано политикой доступа.",
+      "errNoAccess": "Здесь страница не может обращаться к почте. Открой её на claude.ai под своим аккаунтом.",
+      "errUnavailable": "Gmail не ответил, попробуй ещё раз.",
+      "errTool": "Gmail вернул ошибку: {message}",
+      "errOther": "Не вышло: {code} {message}"
+    }
+  };
+
+  const fmt = (s, vars = {}) => String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
+  const localeFor = (code) => ({ ru: "ru-RU", en: "en-GB" })[code] || code || "en-GB";
+  const pick = (code, extra) => ({ ...I18N.en, ...(I18N[code] || {}), ...(extra || {}) });
+
+  // Until the summary arrives, speak the language remembered from the last open, or the browser's.
+  // Storage can be unavailable (private windows, previews) — then the browser language it is.
+  const remember = (code, ui) => {
+    try {
+      localStorage.setItem("svodka.lang", code);
+      localStorage.setItem("svodka.ui", JSON.stringify(ui || null));
+    } catch (e) {}
+  };
+  let lang = null, savedUi = null;
+  try {
+    lang = localStorage.getItem("svodka.lang");
+    savedUi = JSON.parse(localStorage.getItem("svodka.ui") || "null");
+  } catch (e) {}
+  if (!lang) lang = (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
+  let T = pick(lang, savedUi);
+
+  const mcp = () => (window.claude && window.claude.mcp) ? window.claude.mcp : null;
+  const picks = new Map();
+
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    $("title").textContent = T.title;
+    $("date").textContent = T.loading;
+    $("status").textContent = T.reading;
+    $("l-marked").textContent = T.tileMarked;
+    $("l-act").textContent = T.tileAct;
+    $("l-unread").textContent = T.tileUnread;
+    $("note").textContent = T.note;
+    $("apply").textContent = T.nothing;
+    $("reset").textContent = T.reset;
+  }
+
+  function explain(err) {
+    const c = err && err.code;
+    if (c === "needs_reauth") return T.errReauth;
+    if (c === "server_not_connected") return T.errNotConnected;
+    if (c === "selection_required") return T.errSelection;
+    if (c === "not_in_manifest") return T.errNotInManifest;
+    if (c === "blocked_by_policy" || c === "approval_required") return T.errBlocked;
+    if (c === "not_granted" || c === "capability_disabled" || c === "capability_removed") return T.errNoAccess;
+    if (c === "server_unavailable") return T.errUnavailable;
+    if (c === "tool_error") return fmt(T.errTool, { message: err.message || "" });
+    return fmt(T.errOther, { code: c || "", message: (err && err.message) || "" });
+  }
+
+  const OPTIONS = [
+    { key: "read", text: "optRead", tone: "t-keep" },
+    { key: "explain", text: "optLater", tone: "t-later" },
+    { key: "trash", text: "optTrash", tone: "t-trash" },
+  ];
+
+  function row(m, kind) {
+    const box = el("div", "mail");
+    const top = el("div", "top");
+    top.append(el("div", "from", m.from || ""), el("div", "when", m.when || ""));
+    box.append(top, el("div", "subj", m.subj || T.noSubject));
+    if (m.gist) box.append(el("div", "gist", m.gist));
+    if (m.why) box.append(el("div", "why", T.why + m.why));
+
+    const acts = el("div", "acts");
+    const state = el("div", "state");
+    const rec = { choice: null, box, state, id: m.threadId, buttons: [] };
+
+    const open = el("a", "chip tone t-open", T.reply);
+    open.href = GM(m.threadId); open.target = "_blank"; open.rel = "noopener";
+    acts.append(open);
+
+    // Without the id of the "done" label the Keep button cannot work — do not show it.
+    OPTIONS.filter((o) => o.key !== "read" || (labels.done && labels.done.id)).forEach((opt) => {
+      const b = el("button", "chip tone " + opt.tone, T[opt.text]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => {
+        rec.choice = rec.choice === opt.key ? null : opt.key;
+        rec.buttons.forEach((x) => x.btn.setAttribute("aria-pressed", String(x.key === rec.choice)));
+        state.className = "state"; state.textContent = "";
+        refresh();
+      });
+      rec.buttons.push({ key: opt.key, btn: b });
+      acts.append(b);
+    });
+
+    picks.set(m.threadId + ":" + kind, rec);
+    box.append(acts, state);
+    return box;
+  }
+
+  function section(kind, items) {
+    if (!items || !items.length) return;
+    const host = $("sections");
+    const h = el("h2", null, T[kind + "Title"]);
+    h.append(el("span", "n", String(items.length)));
+    host.append(h);
+    const hint = T[kind + "Hint"];
+    if (hint) host.append(el("div", "hint", hint));
+    items.forEach((m) => host.append(row(m, kind)));
+  }
+
+  function markedSection(items) {
+    if (!items || !items.length) return;
+    const host = $("sections");
+    const h = el("h2", null, T.markedTitle);
+    h.append(el("span", "n", String(items.length)));
+    host.append(h);
+    const trashName = (labels.trash && labels.trash.name) || T.defaultTrash;
+    const hint = el("div", "hint", fmt(dry ? T.markedHintDry : T.markedHint, { name: trashName }));
+    const link = el("a", null, T.openLabel);
+    link.href = "https://mail.google.com/mail/u/0/#search/" + encodeURIComponent('label:"' + trashName + '"');
+    link.target = "_blank"; link.rel = "noopener";
+    hint.append(link);
+    host.append(hint);
+
+    items.forEach((m) => {
+      const li = el("div", "marked");
+      const a = el("a", "msubj", m.subj || T.noSubject);
+      a.href = GM(m.threadId); a.target = "_blank"; a.rel = "noopener";
+      li.append(a, el("span", "mfrom", " · " + (m.from || "")));
+      li.append(el("div", "mwhy", (m.when || "") + " · " + (m.why || "")));
+      host.append(li);
+    });
+  }
+
+  const isWork = (c) => c === "read" || c === "trash";
+  const pending = () => [...picks.values()].filter((r) => isWork(r.choice));
+
+  function refresh() {
+    const n = pending().length;
+    const later = [...picks.values()].filter((r) => r.choice === "explain").length;
+    $("apply").disabled = n === 0;
+    $("apply").textContent = n === 0 ? T.nothing : fmt(T.apply, { n });
+    $("barnote").textContent = later ? fmt(T.later, { n: later }) : "";
+  }
+
+  async function run(rec) {
+    const call = (tool, input) => mcp().callTool(SERVER, tool, input);
+    if (rec.choice === "read") {
+      await call("label_thread", { threadId: rec.id, labelIds: [labels.done.id] });
+      await call("unlabel_thread", { threadId: rec.id, labelIds: ["UNREAD"] });
+      return T.kept;
+    }
+    if (rec.choice === "trash") {
+      await call("trash_thread", { threadId: rec.id });
+      return T.trashed;
+    }
+    return "";
+  }
+
+  function addUndo(rec) {
+    const b = el("button", "chip tone t-open", T.undo);
+    b.type = "button";
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        if (rec.choice === "trash") {
+          // The connector does not allow untrash_thread ("caller does not have permission"),
+          // but removing the TRASH system label works.
+          await mcp().callTool(SERVER, "unlabel_thread", { threadId: rec.id, labelIds: ["TRASH"] });
+        } else {
+          await mcp().callTool(SERVER, "unlabel_thread", { threadId: rec.id, labelIds: [labels.done.id] });
+          await mcp().callTool(SERVER, "label_thread", { threadId: rec.id, labelIds: ["UNREAD"] });
+        }
+        rec.state.className = "state"; rec.state.textContent = T.restored;
+        rec.box.classList.remove("done");
+        b.remove();
+      } catch (e) {
+        rec.state.className = "state err"; rec.state.textContent = explain(e);
+        b.disabled = false;
+      }
+    });
+    rec.box.querySelector(".acts").append(b);
+  }
+
+  $("reset").addEventListener("click", () => {
+    picks.forEach((r) => {
+      if (r.box.classList.contains("done")) return;
+      r.choice = null;
+      r.buttons.forEach((x) => x.btn.setAttribute("aria-pressed", "false"));
+      r.state.className = "state"; r.state.textContent = "";
+    });
+    refresh();
+  });
+
+  $("apply").addEventListener("click", async () => {
+    const todo = pending();
+    $("apply").disabled = true; $("reset").disabled = true;
+    let ok = 0, failed = 0;
+    for (const rec of todo) {
+      rec.state.className = "state"; rec.state.textContent = "…";
+      $("apply").textContent = fmt(T.applying, { i: ok + failed + 1, n: todo.length });
+      try {
+        rec.state.className = "state ok";
+        rec.state.textContent = await run(rec);
+        rec.box.classList.add("done");
+        rec.buttons.forEach((x) => (x.btn.disabled = true));
+        addUndo(rec);
+        ok++;
+      } catch (e) {
+        rec.state.className = "state err"; rec.state.textContent = explain(e);
+        failed++;
+      }
+    }
+    $("apply").textContent = failed ? fmt(T.doneFailed, { ok, failed }) : fmt(T.done, { ok });
+    $("barnote").textContent = T.undoHint;
+    $("reset").disabled = false;
+  });
+
+  function fail(text) {
+    const s = $("status");
+    s.className = "status err";
+    s.textContent = text;
+    $("date").textContent = "";
+  }
+
+  async function load() {
+    applyStatic();
+
+    if (!mcp()) {
+      fail(T.errNoAccess);
+      return;
+    }
+
+    let res;
+    try {
+      // Always fresh: the run rebuilds the summary, a cached answer would only get in the way.
+      res = await mcp().callTool(
+        SERVER, "list_drafts",
+        { query: "subject:SVODKA-DATA", pageSize: 5, view: "DRAFT_VIEW_FULL" },
+        { cache: false }
+      );
+    } catch (e) {
+      fail(explain(e));
+      return;
+    }
+
+    const drafts = (res.payload && res.payload.drafts) || [];
+    if (!drafts.length) {
+      fail(T.noDrafts);
+      return;
+    }
+
+    drafts.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const d = drafts[0];
+
+    let data;
+    try {
+      data = JSON.parse(d.plaintextBody || "");
+    } catch (e) {
+      fail(T.broken);
+      return;
+    }
+
+    if (data.language) {
+      lang = data.language;
+      T = pick(lang, data.ui);
+      remember(lang, data.ui);
+      applyStatic();
+    }
+    labels = data.labels || { trash: null, done: null };
+    dry = !!data.dryRun;
+
+    let made = null;
+    if (d.date) {
+      const opts = { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "long" };
+      try { made = new Date(d.date).toLocaleString(localeFor(lang), opts); }
+      catch (e) { made = new Date(d.date).toLocaleString("en-GB", opts); }
+    }
+    $("date").textContent = fmt(T.dateLine, { date: data.date || "—" }) + (made ? fmt(T.builtAt, { time: made }) : "");
+    $("status").hidden = true;
+    $("tiles").hidden = false;
+    $("note").hidden = false;
+    if (dry) $("note").textContent = T.dryNote + " " + T.note;
+    if (!(labels.done && labels.done.id)) $("note").textContent += " " + T.noDoneLabel;
+    $("bar").style.display = "block";
+
+    $("t-marked").textContent = (data.marked || []).length;
+    $("t-act").textContent = (data.act || []).length;
+    $("t-unread").textContent = data.unreadTotal ?? "—";
+
+    section("act", data.act);
+    section("unread", data.unread);
+    section("check", data.check);
+    markedSection(data.marked);
+
+    const foot = $("foot");
+    foot.hidden = false;
+    foot.textContent = T.foot;
+
+    refresh();
+  }
+
+  load();
+</script>

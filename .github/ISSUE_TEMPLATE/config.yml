@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A question or an idea
+    url: https://github.com/liza-zaychik/svodka/discussions
+    about: Ask anything, or share the rules you wrote for yourself.

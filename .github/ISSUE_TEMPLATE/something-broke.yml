@@ -1,0 +1,25 @@
+name: Something is not working
+description: No summary arrived, the card is empty, a run turned red
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: No technical detail needed — write it the way you would tell a friend.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      placeholder: The morning push never came and the card still shows yesterday's summary.
+    validations:
+      required: true
+  - type: input
+    id: when
+    attributes:
+      label: Since when?
+      placeholder: Since Tuesday, it worked before that.
+  - type: textarea
+    id: log
+    attributes:
+      label: Anything red in the Actions tab? (optional)
+      description: Your copy → Actions → the last run. If it is red, paste the last few lines.
+      render: shell
