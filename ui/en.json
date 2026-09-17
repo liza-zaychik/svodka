@@ -17,6 +17,7 @@
     "doneFailed": "Done: {ok}, failed: {failed}",
     "reset": "Reset",
     "later": "Remind me later: {n} — they come back in the next summary",
+    "laterDone": "stays unread — comes back in the next summary",
     "undoHint": "Changed your mind? Press “Undo” on the message.",
     "optRead": "Keep · don't show again",
     "optLater": "Remind me later",

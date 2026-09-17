@@ -293,6 +293,7 @@
       "doneFailed": "Done: {ok}, failed: {failed}",
       "reset": "Reset",
       "later": "Remind me later: {n} — they come back in the next summary",
+      "laterDone": "stays unread — comes back in the next summary",
       "undoHint": "Changed your mind? Press “Undo” on the message.",
       "optRead": "Keep · don't show again",
       "optLater": "Remind me later",
@@ -347,6 +348,7 @@
       "doneFailed": "Готово: {ok}, с ошибкой: {failed}",
       "reset": "Сбросить",
       "later": "Напомнить позже: {n} — придут в следующей сводке",
+      "laterDone": "останется непрочитанным — придёт в следующей сводке",
       "undoHint": "Передумаешь — жми «Вернуть» у нужного письма.",
       "optRead": "Оставить · больше не показывать",
       "optLater": "Напомнить позже",
@@ -520,8 +522,10 @@
     });
   }
 
-  const isWork = (c) => c === "read" || c === "trash";
-  const pending = () => [...picks.values()].filter((r) => isWork(r.choice));
+  // Every pick counts towards the button. "Remind me later" simply changes nothing in the mailbox:
+  // the conversation stays unread and comes back tomorrow.
+  const isPicked = (c) => c === "read" || c === "trash" || c === "explain";
+  const pending = () => [...picks.values()].filter((r) => isPicked(r.choice));
 
   function refresh() {
     const n = pending().length;
@@ -542,6 +546,7 @@
       await call("trash_thread", { threadId: rec.id });
       return T.trashed;
     }
+    if (rec.choice === "explain") return T.laterDone; // nothing to do: leave it unread
     return "";
   }
 
@@ -592,7 +597,7 @@
         rec.state.textContent = await run(rec);
         rec.box.classList.add("done");
         rec.buttons.forEach((x) => (x.btn.disabled = true));
-        addUndo(rec);
+        if (rec.choice !== "explain") addUndo(rec); // nothing was changed, nothing to undo
         ok++;
       } catch (e) {
         rec.state.className = "state err"; rec.state.textContent = explain(e);
