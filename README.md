@@ -90,7 +90,8 @@ connector switched on in Claude (Settings → Connectors) — the card's buttons
 - **`rules.md`** — retention periods, the never-touch list, section priorities, in plain
   words. Claude reads it on every run. Start from [`rules.example.md`](rules.example.md).
 - **`config.json`** — language, timezone, how many emails to show, label names, and the
-  push switches `notify.ready` and `notify.failed`. See [`config.example.json`](config.example.json).
+  push switches `notify.ready` and `notify.failed`. `neverMark` holds the words that
+  forbid the "to delete" label — code checks the full text for them before labelling anything. See [`config.example.json`](config.example.json).
 - **Dry run** — a full summary with nothing labelled. Add a repository variable
   `DRY_RUN` = `true` (Settings → Secrets and variables → Actions → Variables).
 - **`ui.json`** — the card and push in a language other than English or Russian;

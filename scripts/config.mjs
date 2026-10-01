@@ -2,6 +2,7 @@
 // Numbers, label names and switches live here; the triage rules in words live in rules.md.
 
 import { readFileSync, existsSync } from "node:fs";
+import { KEEP_WORDS } from "./keep.mjs";
 
 const DEFAULTS = {
   language: "en",
@@ -10,6 +11,9 @@ const DEFAULTS = {
   labels: { trash: "🗑 To delete", done: "✅ Done", notify: "📬 Svodka" },
   // Read the full text of emails that need action, so their gists carry real amounts and deadlines.
   fullTextForAction: true,
+  // Words that forbid the "to delete" label. Checked by code in the full text
+  // before anything is labelled; a list in config.json replaces this one.
+  neverMark: KEEP_WORDS,
   notify: {
     ready: true, // push when the summary is ready
     failed: true, // push when a run fails

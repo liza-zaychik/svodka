@@ -26,6 +26,22 @@ Nothing is ever deleted automatically.
 | Stale confirmations: verify your email, password reset, magic links | 2 weeks |
 | One-time codes, waitlist confirmations, "refund issued", news digests, expired "Action required", review requests | immediately |
 
+## What may turn out to be evidence
+
+Retention periods do not apply to mail that documents money or responsibility:
+damage, a deposit, money held or withheld, a claim or complaint, a fine, an
+insurance case, warranty repair, a disputed charge, a case number. Never mark
+these, even when the event has passed and the period has run out.
+
+Examples: a car rental closed with a record of the car's condition, a reply to a
+delivery complaint, a notice that a deposit is being held.
+
+When in doubt whether an email belongs here, do not mark it. An extra email in the
+inbox is cheaper than a lost document.
+
+Code checks this once more: before a label goes on, it reads the full text and looks
+for those words (the `neverMark` list). Anything matching is left alone.
+
 ## Never touch
 
 - Emails from real people and personal correspondence, including replies from banks, doctors, coaches
