@@ -84,10 +84,22 @@ const clean = (s) =>
  * Previously only incoming messages were collected — and replies got lost.
  * Message bodies are not read: only headers and the snippet.
  */
+// Scheduled sends sit in the thread with a future date, the owner's address and no
+// labels at all — not even SENT. They have not happened yet: never read them as mail.
+const notYetSent = (m) => Number(m.internalDate) > Date.now();
+
+let ownAddress = null;
+async function owner() {
+  if (ownAddress === null) ownAddress = ((await profile()).emailAddress || "").toLowerCase();
+  return ownAddress;
+}
+
 export async function getThread(id) {
   const t = await call(`/threads/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`);
+  const mine = await owner();
   const msgs = (t.messages || [])
     .filter((m) => !(m.labelIds || []).some((l) => l === "DRAFT" || l === "TRASH"))
+    .filter((m) => !notYetSent(m))
     .map((m) => ({
       labels: m.labelIds || [],
       date: Number(m.internalDate),
@@ -99,7 +111,10 @@ export async function getThread(id) {
   if (!msgs.length) return null;
 
   const latest = msgs[msgs.length - 1];
-  const incoming = msgs.filter((m) => !m.labels.includes("SENT"));
+  // The SENT label alone is not enough: Gmail leaves some of the owner's own
+  // messages without it, and then a reply of theirs looks like incoming mail.
+  const fromMe = (m) => m.labels.includes("SENT") || (mine && m.from.toLowerCase().includes(mine));
+  const incoming = msgs.filter((m) => !fromMe(m));
   const lastIncoming = incoming[incoming.length - 1] || latest;
 
   return {
@@ -109,7 +124,7 @@ export async function getThread(id) {
     subject: lastIncoming.subject || latest.subject,
     snippet: latest.snippet,
     inThread: msgs.length,
-    lastFromMe: latest.labels.includes("SENT"),
+    lastFromMe: fromMe(latest),
     labels: [...new Set(msgs.flatMap((m) => m.labels))],
   };
 }
@@ -280,8 +295,11 @@ function freshText(text) {
  */
 export async function latestIncomingText(threadId, maxChars = 3000) {
   const t = await call(`/threads/${threadId}?format=full`);
+  const mine = await owner();
   const incoming = (t.messages || [])
     .filter((m) => !(m.labelIds || []).some((l) => l === "DRAFT" || l === "TRASH" || l === "SENT"))
+    .filter((m) => !notYetSent(m))
+    .filter((m) => !mine || !(header(m, "from") || "").toLowerCase().includes(mine))
     .sort((a, b) => Number(a.internalDate) - Number(b.internalDate));
   const latest = incoming[incoming.length - 1];
   if (!latest) return "";
